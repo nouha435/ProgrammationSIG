@@ -1,132 +1,112 @@
 require([
-    "esri/config", 
-    "esri/Map", 
-    "esri/views/MapView", 
-    "esri/layers/GraphicsLayer", 
-    "esri/geometry/Point", 
-    "esri/geometry/Polyline", 
-    "esri/geometry/Polygon", 
-    "esri/Graphic",
-    "esri/widgets/Sketch" // Ajout du module Sketch
-  ], function(esriConfig, Map, MapView, GraphicsLayer, Point, Polyline, Polygon, Graphic, Sketch) {
-  
-    esriConfig.apiKey = "AAPTxy8BH1VEsoebNVZXo8HurJqJHuAOWtOeDglllaI2VkFwO1rbxtjUrYI3FQtGSrsxxHBIkcC6jL3fHJwtysH3yJWPX9xyvtUM4LJzrp7nUc1H6-CiQkU_BlQ7Y_G6ed9PlJi59BGIYPYaCmJ6wAqVFvePHzOfwe8lBbbplfHipzfKCpaIMFaT5qoSyQB4bGqsXCWZp-Xfbwihbl668Ll9HDZ4N51aqpYczuUn0BqV6m7_fi7HgPorB1CQmtTWxh6zAT1_SmziIOm6";
-
+    "esri/config",
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/layers/GraphicsLayer",
+    "esri/widgets/Sketch",
+    "esri/widgets/Sketch/SketchViewModel"
+], function (
+    esriConfig,
+    Map,
+    MapView,
+    FeatureLayer,
+    GraphicsLayer,
+    Sketch,
+    SketchViewModel
+) {
+    esriConfig.apiKey =
+      "AAPTxy8BH1VEsoebNVZXo8HurIJbcyg--Z0NSed8P7Wqjib8XaB6ReHxsI9uVRBG4mOQjGo86DS-uaJIhkMBuxeMMH-GAoiwXzENrEPWpPxnbsntw0GAMRqK9iXPTDHlRRHyAptGrpjdyimQml6PYg9APpvW00A45Zv-aUZvOAbaDAgMBpsk3isc9Isf2olkX3QDmhGnhJTD6zwrI01GRT4RStyyFO8epz5bSlSuQNIO3oc5M7A2_RbvNrkEQ-xRQIwtAT1_HNOoAM8o";
+       // Création de la couche graphique
+    const coucheGraphique = new GraphicsLayer();
    
-
     const map = new Map({
-
-      basemap: "arcgis-topographic" // Fond de carte
-
+      basemap: "arcgis-topographic",
+     
     });
-
- 
-
+   
     const view = new MapView({
-
       map: map,
-
-      center: [-7.62, 33.59], // Longitude, latitude
-
-      zoom: 13, // Niveau de zoom
-
-      container: "viewDiv"
-
+      center: [-7.62, 33.59],
+          zoom: 13,
+          container: "viewDiv",
+     
     });
-      // Ajout du GraphicsLayer
-  const graphicsLayer = new GraphicsLayer();
-  map.add(graphicsLayer);
-// Création d'un point
-const point = new Point({
-    longitude: -7.62,
-    latitude: 33.59
-  });
+    const featureLayer = new FeatureLayer({
+        url: "https://services5.arcgis.com/FlfGDAZ77bDVEcE9/arcgis/rest/services/site_acceuil/FeatureServer",
+        outFields: ["*"],
 
-  // Définition du symbole
-  let symbol = {
-    type: "simple-marker", // Utilisation de SimpleMarkerSymbol
-    style: "diamond",
-    color: "blue",
-    size: "15px", // Taille en pixels
-    outline: { 
-      color: [255, 255, 0], // Couleur jaune
-      width: 3 // Largeur du contour
-    }
-  };
-
-  // Création du graphique et ajout au GraphicsLayer
-  const pointGraphic = new Graphic({
-    geometry: point,
-    symbol: symbol
-  });
-
-  graphicsLayer.add(pointGraphic);
-
-
-// Définition de la polyligne
-const polyline = new Polyline({
-    paths: [
-      [-7.66, 33.54], // Longitude, latitude
-      [-7.64, 33.56], // Longitude, latitude
-      [-7.57, 33.58]  // Longitude, latitude
-    ]
-  });
-
-  // Définition du symbole de la ligne
-  const simpleLineSymbol = {
-    type: "simple-line",
-    color: "blue", // Couleur de la ligne
-    width: 2
-  };
-
-  // Création du graphique et ajout au GraphicsLayer
-  const lineGraphic = new Graphic({
-    geometry: polyline,
-    symbol: simpleLineSymbol
-  });
-
-  graphicsLayer.add(lineGraphic);
-    // Définition du polygone
-    const polygon = new Polygon({
-        rings: [
-          [-7.51, 33.61], // Longitude, latitude
-          [-7.47, 33.64], // Longitude, latitude
-          [-7.45, 33.61], // Longitude, latitude
-          [-7.48, 33.60], // Longitude, latitude
-          [-7.51, 33.61]  // Fermeture du polygone
-        ]
-      });
     
-      // Définition du style de remplissage
-      const simpleFillSymbol = {
-        type: "simple-fill",
-        color: [0, 0, 255, 0.8], // Bleu avec 80% d'opacité
-        outline: {
-          color: [255, 255, 255], // Contour blanc
-          width: 1
+     });
+ 
+  map.add(featureLayer);
+  
+  const projeBtn = document.getElementById("projeBtn");    
+ 
+    view.ui.add(projeBtn,"bottom-left"); 
+
+    let sketchVmodel;
+    view.when(() => { 
+        // Initialisation du SketchViewModel
+        sketchVmodel = new SketchViewModel({ 
+            layer: coucheGraphique, 
+            view: view 
+        });
+
+        // Gestion de l'événement "create"
+        sketchVmodel.on("create", (event) => {
+            if (event.state === "complete") {
+                coucheGraphique.remove(event.graphic);
+                featureLayer.applyEdits({  // Correction : utilisation de featureLayer au lieu de projets
+                    addFeatures: [event.graphic]
+                }).then((result) => {
+                    console.log("Ajout réussi :", result);
+                }).catch((error) => {
+                    console.error("Erreur lors de l'ajout :", error);
+                });
+            }
+        });
+    });
+
+    // Gestion du bouton pour dessiner un polygone
+    projeBtn.onclick = () => {
+        if (sketchVmodel) {
+            sketchVmodel.create("polygon");
+        } else {
+            console.error("SketchViewModel non initialisé.");
         }
-      };
-    
-      // Création du graphique et ajout au GraphicsLayer
-      const polygonGraphic = new Graphic({
-        geometry: polygon,
-        symbol: simpleFillSymbol
-      });
-    
-      graphicsLayer.add(polygonGraphic);
-    
-   // Ajout du widget Sketch
-   let sketch = new Sketch({
-    layer: graphicsLayer,
-    view: view
-  });
+    };
 
-  // Positionner Sketch en haut à gauche
-  view.ui.add(sketch, "top-left");
+      // Suppression d'une entité avec Ctrl + Shift + Click
+      view.on("click", (event) => {
+        if (event.ctrlKey && event.shiftKey) {
+            console.log("Ctrl + Shift détectés");
 
+            // Effectuer un hitTest pour vérifier si une entité est cliquée
+            view.hitTest(event).then((response) => {
+                // Si des résultats sont trouvés
+                if (response.results.length > 0) {
+                    const graphic = response.results[0].graphic;
+
+                    // Vérifier que l'entité est dans la couche projet
+                    if (graphic.layer === projets) {
+                        console.log("Entité trouvée, suppression en cours...");
+
+                        // Supprimer l'entité de la couche projet
+                        projets.applyEdits({
+                            deleteFeatures: [graphic]
+                        }).then((result) => {
+                            console.log("Suppression réussie :", result);
+                        }).catch((error) => {
+                            console.error("Erreur lors de la suppression :", error);
+                        });
+                    }
+                } else {
+                    console.log("Aucune entité trouvée sous le clic.");
+                }
+            }).catch((err) => {
+                console.error("Erreur lors du hitTest :", err);
+            });
+        }
+    });
 });
-
-
-
-
-
