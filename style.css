@@ -1,8 +1,21 @@
-html,
-body,
-#viewDiv {
-padding: 0;
-margin: 0;
-height: 100%;
-width: 100%;
-}
+html, 
+body, 
+#viewDiv { 
+  padding: 0; 
+  margin: 0; 
+  height: 100%; 
+  width: 100%; 
+} 
+ 
+#update { 
+    padding: 6px; 
+  } 
+ 
+#form { 
+    background: #fff; 
+  } 
+ 
+  /* replaces esri-widget--panel */ 
+.scroller { 
+    overflow-x: hidden; 
+    overflow-y: auto; }
